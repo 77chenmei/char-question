@@ -1,0 +1,113 @@
+<div class="wrapper col-md-8 col-md-offset-2">
+    <form class="form-horizontal" onsubmit="return false" id="profile_frm">
+        <fieldset>
+            <legend>个人信息</legend>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">头像</label>
+                <div id="file" class="col-sm-8">
+                    <img :src="'./uploads/' + person.photo" class="img-circle img-responsive" id="fileImage">
+                    <input type="file" id="filename" @change="changeImage">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">用户名</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control ipnVal" name='username' v-model="person.username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="age" class="col-sm-2 control-label">年龄</label>
+                <div class="col-sm-8">
+                    <input type="number" class="form-control" name="age" v-model="person.age">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">性别</label>
+                <div class="col-sm-8">
+                    <div class="radio-inline">
+                        <input type="radio" v-model='person.sex' value='female'>female
+                    </div>
+                    <div class="radio-inline">
+                        <input type="radio" v-model='person.sex' value='male'>male
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email" class="col-sm-2 control-label">邮箱</label>
+                <div class="col-sm-8">
+                    <input type="email" class="form-control ipnVal" name="email" v-model='person.email'>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="phone" class="col-sm-2 control-label">电话</label>
+                <div class="col-sm-8">
+                    <input type="phone" class="form-control ipnVal" name="phone" v-model='person.phone'>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="realname" class="col-sm-2 control-label">真实姓名</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" name="realname" v-model='person.realname'>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-8 text-center">
+                    <button type="submit" class="btn btn-default" @click='closed'>取消</button>
+                    <button type="submit" class="btn btn-default" @click='save'>保存</button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<script>
+    new Vue({
+        el: '#profile_frm',
+        data: {
+            person: {
+                type: '',
+            }
+        },
+        created() {
+            $.get('/profile/user', {
+                username: Cookies.get('username'),
+                type: Cookies.get('type')
+            }, (res) => {
+                this.person = res.data;
+                $('#fileImage').prop('src', './uploads/' + res.data.photo);
+            })
+        },
+        methods: {
+            closed() {
+                location.reload();
+            },
+            save() {
+                $.post('/profile/saveProfile', this.person, (res) => {
+                    this.closed();
+                })
+            },
+            changeImage: function () {
+                //模仿表单对象打包数据
+                var newFrm = new FormData();
+                newFrm.append('images', filename.files[0]); //以files的方式获取数据
+                $.ajax({
+                    url: '/upload', //通过url提交数据
+                    type: 'post',
+                    cache: false,
+                    data: newFrm,
+                    processData: false,
+                    contentType: false,
+                    success: function (result) {
+                        if (result.error == 0) {
+                            //文件上传成功，重新设置头像
+                            $('#fileImage').prop('src', './uploads/' + result.data);
+                            demo.register.file_img = result.data;
+                        } else {
+                            console.log(result.errorInfo);
+                        }
+                    }
+                })
+            }
+        }
+    })
+</script>

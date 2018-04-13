@@ -1,0 +1,126 @@
+*{
+    margin:0;
+    padding:0;
+}
+body,html{
+    height:100%;
+    background:#ccc;
+    overflow:hidden;
+}
+.row{
+    margin:0;
+}
+.row .col-md-10{
+    padding:0;
+}
+.nav-item img{
+    width:80%;
+    height:auto;
+}
+#username img{
+    width:25px;
+    height:25px;
+}
+.img-thumbnail{
+    padding:1px;
+}
+.modal-content{
+    margin-top:50px;
+} 
+.wrapper{
+    /* padding:40px 20px; */
+    height:100%;
+}
+.info_box{
+    width:100%;
+    height:100%;
+    background:url('../img/contact.jpg') no-repeat center center;
+    background-size:cover;
+}
+#info_btn{
+    padding:10px;
+    background:rgb(245, 90, 211);
+    color:#fff;
+    font:20px/1.5em '楷体';
+    outline:none;
+    border:none;
+    border-radius:10px;
+    box-shadow:2px 2px 5px rgb(116, 37, 98);
+    display:block;
+    margin:500px auto;
+}
+.align{
+    text-align:center;
+}
+.nav-top>li>a{
+    padding:15px 15px;
+}
+#file{
+    width:100px;
+    height:100px;
+    margin:0 auto;
+    position: relative;
+ } 
+#file *{
+     padding:0;
+ } 
+#fileImage{
+    width:100px;
+    height:100px;
+    position: absolute;
+    top:0;
+ }
+ #filename{
+    width:100px;
+    height:100px;
+    position: absolute;
+    top:0;
+    opacity:0;
+ }
+ .form-group span{
+     font-size:12px;
+     font-style:italic;
+     color:red;
+ } 
+ .nav-left{
+     padding:0;
+ }
+ .person_tittle {
+    text-align: center;
+}
+
+.personA {
+    text-align: center;
+}
+.person_tittle button {
+    padding: 5px;
+}
+
+.person_hr {
+    background: #f40;
+    border: 1px solid #f40;
+}
+
+table th,td {
+    text-align: center;
+}
+
+/* 表格容器样式，用flex布局可保证table内容能铺满剩余空间 */
+.sti-tbl-container {
+    height : 100%;
+    overflow : hidden;
+}
+/* 设置表格的布局方式，用于宽度对齐 */
+.sti-tbl-body>table, .sti-tbl-header>table {
+    table-layout: fixed;
+}
+/* 设置表格内容容器，用于铺满整个剩余空间 */
+.sti-tbl-container .sti-tbl-body {
+    overflow-y : scroll;
+    height:440px;
+}
+.user_tbdy tr td{
+    overflow: hidden;
+    text-overflow:ellipsis;
+    white-space: nowrap;
+}

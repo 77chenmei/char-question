@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="./plugin/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./plugin/bs/bootstrap-vue.css">
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+
+<body>
+    <script src="./plugin/vue.js"></script>
+    <script src="./plugin/jquery.min.js"></script>
+    <script src="./plugin/axios.js"></script>
+    <script src="./plugin/js.cookie.js"></script>
+    <script src="./plugin/bootstrap/js/bootstrap.js"></script>
+    <!-- <script src='./plugin/bs/bootstrap-vue.js'></script>
+    <script src='./plugin/bs/polyfill.min.js'></script> -->
+
+    <link rel="stylesheet" href="./plugin/Swiper4/dist/css/swiper.min.css">
+    <link rel="stylesheet" href="./plugin/Swiper4/dist/css/animate.css">
+
+    <div class="container-fulit" style="height:100%;" id='wrapper'>
+
+        <div class="row" style="height:100%;">
+            <div class="col-md-2 navbar-inverse nav-left" style="height:100%;">
+                <ul class="nav nav-pills nav-stacked align navbar-inverse">
+                    <li class="nav-item" style="padding:10px;">
+                        <img src="/../img/logo.png" alt="问卷系统">
+                    </li>
+                    <li class="nav-item" v-if='type == 0'>
+                        <a href="javascript:void(0)" @click="jump('users')">用户管理</a>
+                    </li>
+                    <li class="nav-item" @click="jump('items')">
+                        <a href="javascript:void(0)">选项管理</a>
+                    </li>
+                    <li class="nav-item" @click="jump('outlines')">
+                        <a href="javascript:void(0)">问卷创建</a>
+                    </li>
+                    <li class="nav-item" @click="jump('questions')">
+                        <a href="javascript:void(0)">问卷管理</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="row col-md-10" style="height:100%;">
+                <div class="navbar navbar-inverse" style="margin-bottom: 0px;padding-right:10px;">
+                    <ul class="nav nav-pills nav-top">
+                        <li class="nav-item">
+                            <a href="javascript:void(0)" @click="jump('info')" class="info_page">首页</a>
+                        </li>
+
+                        <li class="nav-item navbar-right">
+                            <a href="javascript:void(0)" class="login1" @click="logOut()">注销</a>
+                        </li>
+                        <li class="nav-item navbar-right" @click="jump('register')">
+                            <a href="javascript:void(0)" class="login2">注册</a>
+                        </li>
+                        <li class="nav-item navbar-right" @click="jump('login')">
+                            <a href="javascript:void(0)" class="login2">登录</a>
+                        </li>
+                        <li class="dropdown navbar-right">
+                            <a href="javascript:void(0)" id="username" class="login1 dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                                aria-expanded="false">
+                                <img src="" class="img-thumbnail">
+                                <span></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li @click="jump('profile1')">
+                                    <a href="#">个人中心</a>
+                                </li>
+                                <li @click="jump('profile2')">
+                                    <a href="#">修改密码</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <div id="content" style="height:100%;">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
+
+<script src="./plugin/dist/jquery.validate.js"></script>
+<script src="./plugin/dist/localization/messages_zh.js"></script>
+
+<script src="./js/main2.js"></script>
+
+<script>
+    var vm = new Vue({
+        el: '#wrapper',
+        created() {
+            this.username = Cookies.get('username');
+            this.type = Number(Cookies.get('type'));
+            this.jump('info');
+            if (Cookies.get('username')) {
+                $('.login2').hide();
+                // $('#username').text(Cookies.get('username'));
+                $('#username span').text(Cookies.get('username'));
+
+                $.get('/profile/user', {
+                    username: Cookies.get('username'),
+                    type: Cookies.get('type'),
+                }, function (res) {
+                    //没有错误显示正确的头像，有错误则显示默认的图片
+                    if(res.error == 0){
+                        console.log(res.data)
+                       $('#username img').prop('src', './uploads/' + res.data.photo)
+                    }else{
+                        $('#username img').prop('src','./uploads/tx.jpg')
+                    }
+                })
+            } else {
+                $('.login1').hide();
+            }
+        },
+        data: {
+            type: 4,
+        },
+        methods: {
+            //页面跳转
+            jump(page) {
+                $.get('./' + page + '.html', function (res) {
+                    $('#content').html(res)
+                })
+            },
+            //点击注销，清除cookie
+            logOut() {
+                Cookies.remove('username');
+                Cookies.remove('type');
+                location.reload();
+            }
+        }
+    })
+</script>

@@ -1,0 +1,233 @@
+<div id="items_wrap" class="col-md-10 col-md-offset-1">
+    <h1 class='person_tittle'>选项管理</h1>
+    <hr class='person_hr'>
+    <p class='person_tittle'>
+        <span>选项操作：</span>
+        <input type="text" placeholder="查询选项内容" @input='selection' id='sel'>
+        <button class='btn btn-success btn-xs' @click='selection("all")'>ALL</button>
+        <button class='btn btn-success btn-xs' @click='show("add")'>Add</button>
+    </p>
+    <!-- 表格容器，可用于设置整个的边框及高度 -->
+    <div class="sti-tbl-container">
+        <!-- 表头容器，必须留出17px的滚动条位置 -->
+        <div class="sti-tbl-header" style="padding-right:17px;">
+            <table class="table table-bordered" style="margin-bottom: 0px;border-bottom-style: none;">
+                <tr>
+                    <th style="width : 10%;">编号</th>
+                    <th style="width : 20%;">选项</th>
+                    <th style="width : 20%;">分组</th>
+                    <th style="width : 20%;">排序</th>
+                    <th style="width : 30%;">操作</th>
+                </tr>
+            </table>
+        </div>
+        <!-- 表格内容容器-->
+        <div class="sti-tbl-body">
+            <table class="table table-bordered scrolltable table-striped">
+                <tbody>
+                    <tr v-for='(item,index) in items' :key="'item_' + index">
+                        <td style="width : 10%;">{{index + 1}}</td>
+                        <td style="width : 20%;" :id='"item" + index'>{{item.item}}</td>
+                        <td style="width : 20%;">{{item.group}}</td>
+                        <td style="width : 20%;">{{item.sort}}</td>
+                        <td style="width : 30%;">
+                            <button class='btn btn-danger btn-xs' @click='delItem(item.id)'>删除</button>
+                            <button class='btn btn-warning btn-xs' @click='editItem(item.id,index)' :id='"btn" + index'>编辑</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- 模态框  增加选项 -->
+    <div class="modal fade" id="item_Modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id='item_tittle'>增加新选项</h4>
+                </div>
+                <div class="modal-body">
+                    <!-- 导航栏 -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active">
+                            <a href="#item" aria-controls="item" role="tab" data-toggle="tab" @click='addNew("item")'>增加选项卡</a>
+                        </li>
+                        <li role="presentation">
+                            <a href="#items" aria-controls="items" role="tab" data-toggle="tab" @click='addNew("items")'>增加选项组</a>
+                        </li>
+                    </ul>
+                    <!-- 导航内容-->
+                    <div class="tab-content" style='padding:10px;'>
+                        <div role="tabpanel" class="tab-pane active" id="item">
+                            <form class="form-horizontal" id='item_addFrm0'>
+                                <div class="form-group">
+                                    <label for="items_num" class="col-sm-4 control-label">请选择添加项目组：</label>
+                                    <div class="col-sm-6">
+                                        <select name="item_groups">
+                                            <option>请选择选项组</option>
+                                            <option v-for = 'index in groups' :value = 'index'>{{index}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="items_num" class="col-sm-4 control-label">选项组添加项：</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" name="items_num">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="items">
+                            <form class="form-horizontal" id='item_addFrm'>
+                                <div class="form-group">
+                                    <label for="items_num" class="col-sm-4 control-label">添加新选项组级别个数：</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" name="items_num" v-model='num'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <button type="button" class="btn btn-default center-block" @click='itemsAdd'>添加</button>
+                                </div>
+                                <div class="form-group" v-for='(cout,index) in couts'>
+                                    <label class="col-sm-4 control-label">级别{{index + 1}}</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" :name='"add" + index'>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" @click='itemSave'>保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '#items_wrap',
+        data: {
+            items: [], //用于存放选项数据
+            operate: 'item', //用于判断当前是添加的是选项卡还是选项组
+            num: 0, //存放页面输入的添加选项组的选项卡的个数
+            couts:'',//添加的选项组分为几个选项卡
+            isedit: '编辑',//作为一个开关，控制编辑和保存
+            groups: '',//存放当前共有多少组选项卡    
+        },
+        created() {
+            this.creat();
+        },
+        methods: {
+            //生成选项卡表格
+            creat() {
+                $.get('/items', (res) => {
+                    if (res.error == 0) {
+                        this.items = res.data;
+                    }
+                })
+            },
+            //获取共有多少组选项卡
+            getGroup() {
+                $.get('/items/getGroup', (res) => {
+                    if (res.error == 0) {
+                        this.groups = res.data;
+                    }
+                })
+            },
+            //选项卡的删除
+            delItem(id) {
+                if (confirm('确定删除吗？')) {
+                    $.get('/items/del', { id: id }, (res) => {
+                        if (res.error == 0) {
+                            this.creat();
+                        }
+                    })
+                }
+            },
+            //选项卡的添加
+            show() {  //显示添加选项模态框
+                $('#item_addFrm0')[0].reset();
+                $('#item_addFrm')[0].reset();
+                $('#item_Modal').modal('show');
+                this.getGroup();
+            },
+            addNew(type) { //判断添加的是选项卡还是新的选项组
+                this.operate = type;
+            },
+            itemsAdd() { //添加新的选项组所有添加的选项卡的个数
+                //从页面中获取到的是个字符串，必须转换为数字，否则在用v-for生成的时，识别不出来
+                this.couts = Number(this.num);
+            },
+            itemSave() { //选项卡的添加保存
+                $('#item_Modal').modal('hide');
+                //增加选项卡
+                if (this.operate == 'item') {
+                    //获取当前所选择添加选项卡的组名
+                    var group_item = item_addFrm0.item_groups.value;
+                    //获取添加选项卡的内容
+                    var group_value = item_addFrm0.items_num.value;
+                    $.post('/items/additem', { group: group_item, value: group_value }, (res) => {
+                        if (res.error == 0) {
+                            this.creat();
+                        }
+                    }, 'json')
+                }
+                //添加新的选项组
+                if (this.operate == 'items') {
+                    console.log(2)
+                    var itemdate = {};
+                    for (var i = 0; i < Number(this.num); i++) {
+                        itemdate[i] = item_addFrm['add' + i].value;
+                    }
+                    $.post('/items/additems', itemdate, (res) => {
+                        $.get('/items', (res) => {
+                            this.items = res.data;
+                        })
+                    }, 'json')
+                }
+
+            },
+            //选项卡的编辑
+            editItem(id, index) {
+                if ($('#btn' + index).text() == '编辑') { //点击table中的编辑保存，点击编辑，table可编辑，
+                    $('#item' + index).prop('contenteditable', true)
+                    $('#btn' + index).text('保存')
+                } else { //点击保存，保存数据到数据库中且table不可编辑
+                    $('#btn' + index).text('编辑');
+                    //我这边设置的是只有选项卡的item可以被编辑
+                    $('#item' + index).prop('contenteditable', false)
+                    //将数据保存到数据库中且刷新table界面
+                    var group_text = $('#item' + index).text();
+                    //更新数据库
+                    $.post('/items/updateItem', { id: id, text: group_text }, (res) => {
+                        if (res.error == 0) {
+                            this.creat();
+                        }
+                    }, 'json')
+                }
+            },
+            //选项卡的查询
+            selection(type) {
+                if (type == 'all') {
+                    $('#sel').val('');
+                    this.creat();
+                } else {
+                    //筛选选项卡
+                    var val = $('#sel').val();
+                    $.get('/items/selection', { val: val }, (res) => {
+                        if (res.error == 0) {
+                            this.items = res.data;
+                        }
+                    })
+                }
+            }
+        }
+    })
+</script>

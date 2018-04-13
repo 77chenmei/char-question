@@ -1,0 +1,133 @@
+<!-- 用户修改密码 -->
+<div class="wrapper col-md-8 col-md-offset-2" id="mpassWord">
+    <form action="" onsubmit="return false" id="newPassw_frm">
+        <fieldset>
+            <legend>修改密码</legend>
+            <p class="form-group">
+                <label for="newPword">新密码</label>
+                <span></span>
+                <input type="password" class="form-control ipnVal" name="password" id='password'>
+            </p>
+            <p class="form-group">
+                <label for="password">确认密码</label>
+                <span></span>
+                <input type="password" class="form-control" name="confirm_password" id='confirm_password'>
+            </p>
+            <p class="form-group">
+                <button class="btn btn-info form-control">保存修改</button>
+            </p>
+        </fieldset>
+    </form>
+</div>
+
+<script>
+    $('#newPassw_frm').validate({
+        //校验规则
+        rules: {
+            password: {
+                required: true,
+                minlength: 5
+            },
+            confirm_password: {
+                required: true,
+                minlength: 5,
+                equalTo: "#password"
+            },
+        },
+        //提示信息更改
+        messages: {
+            password: {
+                required: "请输入密码",
+                minlength: "密码长度不能小于 5 个字母"
+            },
+            confirm_password: {
+                required: "请输入密码",
+                minlength: "密码长度不能小于 5 个字母",
+                equalTo: "两次密码输入不一致"
+            },
+        },
+        //改变错误信息防置的位置
+        errorPlacement: function (error, element) {
+            error.appendTo(element.siblings('span'));
+        },
+        //注册成功后提交到数据库中
+        submitHandler: function (form) {
+            $.post('/profile/password', {
+                username: Cookies.get('username'),
+                type: Cookies.get('type'),
+                password:newPassw_frm.password.value
+            }, function (res) {
+                if (res.error == 0) {
+                    alert(res.message);
+                    demo.index.jump('info');
+                } else {
+                    console.log(res.errorInfo);
+                }
+            }, 'json')
+        }
+    }); //表单的验证 表单的id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // new Vue({
+    //     el: '#mpassWord',
+    //     data: {
+    //         person: {
+    //             type: '',
+    //         }
+    //     },
+    //     created() {
+    //         $.get('/profile', {
+    //             username: Cookies.get('username'),
+    //             type: Cookies.get('type')
+    //         }, (res) => {
+    //             this.person = res.data;
+    //             $('#fileImage').prop('src', './uploads/' + res.data.photo);
+    //         })
+    //     },
+    //     methods: {
+    //         closed() {
+    //             location.reload();
+    //         },
+    //         save() {
+    //             $.post('/saveProfile', this.person, (res) => {
+    //                 console.log(res);
+    //                 this.closed();
+    //             })
+    //         }
+    //     }
+    // })
+</script>

@@ -1,0 +1,173 @@
+<div id="questions_wrap" class="col-md-10 col-md-offset-1">
+    <h1 class='person_tittle'>问卷管理</h1>
+    <hr class='person_hr'>
+    <p class='person_tittle'>
+        <span>选项操作：</span>
+        <input type="text" placeholder="查询选项内容" id='sel'>
+        <button class='btn btn-success btn-xs'>ALL</button>
+        <button class='btn btn-success btn-xs'>Add</button>
+    </p>
+    <!-- 表格容器，可用于设置整个的边框及高度 -->
+    <div class="sti-tbl-container">
+        <!-- 表头容器，必须留出17px的滚动条位置 -->
+        <div class="sti-tbl-header" style="padding-right:17px;">
+            <table class="table table-bordered" style="margin-bottom: 0px;border-bottom-style: none;">
+                <tr>
+                    <th style="width : 8%;">编号</th>
+                    <th style="width : 15%;">标题</th>
+                    <th style="width : 15%;">创建者</th>
+                    <th style="width : 30%;">创建时间</th>
+                    <th style="width : 10%;">状态</th>
+                    <th style="width : 22%;">操作</th>
+                </tr>
+            </table>
+        </div>
+        <!-- 表格内容容器-->
+        <div class="sti-tbl-body">
+            <table class="table table-bordered scrolltable table-striped">
+                <tbody>
+                    <tr v-for='(question,index) in questions' :key="'question_' + index">
+                        <td style="width : 8%;">{{index + 1}}</td>
+                        <td style="width : 15%;" :id='"question" + index'>{{question.tittle}}</td>
+                        <td style="width : 15%;">{{question.create_id}}</td>
+                        <td style="width : 30%;">{{question.ctime}}</td>
+                        <td style="width : 10%;">
+                            <input type="button" class='btn btn-danger btn-xs' :value='question.status?  "关闭":"开启"' @click="changeSta(question.id,question.status,index)">
+                        </td>
+                        <td style="width : 22%;">
+                            <button class='btn btn-danger btn-xs' @click='delQues(question.id)'>删除</button>
+                            <button class='btn btn-warning btn-xs' @click='readQues(question.id)'>查看</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal fade" id="question_Modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" :class='"queT" + question.id'>
+                        {{question.tittle}}
+                        <button type="button" class='btn btn-info btn-xs' @click="editTittle(question.id,'queT' + question.id)">修改标题</button>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div style='overflow-y:scroll; height:400px;' class='list-group'>
+                        <div class='list-group-item'>
+                            <div class="panel panel-default" v-for='(que,index) in question.content'>
+                                <div class="panel-heading" :class="'quet' + index">
+                                    {{que.text}}
+                                    <input type="button" value="删除" class='btn pull-right btn-danger btn-xs' @click='delgroup(que.id,question.id)'>
+                                    <!-- <button type="button" class='btn pull-right btn-warning btn-xs' @click="editTittle(que.id,'quet' + index)">更改标题</button> -->
+                                </div>
+                                <div class="panel-body">
+                                    <div class="radio-inline" v-for='(ite,ind) in que.items'>
+                                        <input type="radio">{{ite.item}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+    var vm = new Vue({
+        el: '#questions_wrap',
+        data: {
+            questions: [], //获取数据库中的数据
+            question: [],//用于存放当前查看获取选择编辑的问卷
+        },
+        created() {
+            this.getData(Cookies.get('username'))
+        },
+        methods: {
+            //获取生成数据
+            getData(itor) {
+                //用户只可以看到自己创建的问卷
+                $.get('/questions/getdata', {
+                    creater: itor
+                }, (res) => {
+                    this.questions = res.data
+                })
+            },
+            //删除试卷
+            delQues(id) {
+                if (confirm('确定删除吗？')) {
+                    $.get('/questions/del', { id: id }, (res) => {
+                        if (res.error == 0) {
+                            this.creat();
+                        }
+                    })
+                }
+            },
+            //查看试卷
+            readQues(id) {
+                //显示模态框
+                $('#question_Modal').modal('show');
+                $.get('/questions/read', { id: id }, (res) => {
+                    if (res.error == 0) {
+                        this.question = res.data[0];
+                        this.question.content = JSON.parse(this.question.content)
+                    }
+                })
+            },
+            //更改标题
+            editTittle(id, tit) {
+                var tit = $('.' + tit),
+                    btn = $(tit).find('button');
+                if ($(btn).text() == '保存') {
+                    $(tit).prop('contenteditable', false).find('button').text('更改标题');
+                    $.get('/questions/changetit', {
+                        id: id,
+                        tittle: $(tit).text()
+                    }, (res) => {
+                        if (res.error == null) {
+                            alert('试卷标题修改成功');
+                        }
+                    })
+                } else {
+                    $(tit).prop('contenteditable', true).find('button').text('保存');
+                }
+            },
+            //删除题目
+            delgroup(id, qid) {
+                console.log(id, qid)
+                var content = Array.prototype.slice.call(this.question.content);
+                var newContent = content.filter((el) => {
+                    return el.id != id;
+                })
+                $.get('/questions/delGroup', {
+                    id: qid,
+                    content: JSON.stringify(newContent)
+                }, (res) => {
+                    if (res.error == 0) {
+                        this.getData(Cookies.get('username'));
+                    }
+                })
+                this.readQues(qid);
+            },
+            //改变试卷状态
+            changeSta(id, btn, index) {
+                // console.log($('.'+btn))
+                $.get('/questions/setStatus', {
+                    id: id,
+                    status: status == 1 ? 0 : 1
+                }, (result) => {
+                    this.questions[index].status = this.questions[index].status == 1 ? 0 : 1;
+                })
+            }
+        },
+
+    })
+</script>

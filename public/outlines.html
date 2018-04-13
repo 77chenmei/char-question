@@ -1,0 +1,264 @@
+<div id="outline_box" class="col-md-10 col-md-offset-1">
+    <h1 class='person_tittle'>问卷创建</h1>
+    <hr class='person_hr'>
+    <div class="outline_left col-md-6">
+        <p class='person_tittle'>
+            <span>选项操作：</span>
+            <button class='btn btn-success btn-xs' @click='showModal("add")'>添加问卷组</button>
+
+        </p>
+        <ul class='list-group' style='overflow-y:scroll; height:520px;'>
+            <li v-for='(line,index) in datelines' class='list-group-item'>
+                <p>
+                    <span :class="'line' + index">{{line.text}}</span>
+                    <input type="button" value="添加" class='btn  btn-success btn-xs' @click='showModal("addmer",line.text,line.id)'>
+                    <button class='btn btn-danger btn-xs' @click='delgroups(line.id,line.pid)'>删除</button>
+                    <button class='btn btn-warning btn-xs' @click='editgroups(line.id,"line" + index,"btn" + index)' :class="'btn' + index">编辑</button>
+                </p>
+                <ul class='list-group'>
+                    <li v-for='(child,index_t) in line.children' class='list-group-item'>
+                        <input type="checkbox" v-model='questions' :value='child'>
+                        <span :class="'child' + index+index_t">{{child.text}}</span>
+                        <input type="button" value="删除" class='btn pull-right btn-danger btn-xs' @click='delgroups(child.id,child.pid)'>
+                        <button type="button" class='btn pull-right btn-warning btn-xs' @click='editgroups(child.id,"child" + index+index_t,"inp" + index+index_t)'
+                            :class="'inp' + index+index_t">编辑</button>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">答题选项：</div>
+                            <div class="panel-body">
+                                <div class='radio-inline'>
+                                    <p style=' white-space:nowrap;' v-for='(group,inde) in groups' :key='"group" + inde'>
+                                        <input type="radio" :name="'inp' + index_t" @click='chosen(child.id,inde)'>
+                                        <span v-for='(grp,ind) in group'> {{grp.item}} </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="outline_right col-md-6">
+        <p class='person_tittle'>
+            <button class='btn btn-success btn-xs' @click='createQ'>生成问卷</button>
+        </p>
+        <div style='overflow-y:scroll; height:520px;' class='list-group'>
+            <div class='list-group-item'>
+                <div class="panel panel-default" v-for='(item,index) in questions'>
+                    <div class="panel-heading">{{item.text}}</div>
+                    <div class="panel-body">
+                        <div class="radio-inline" v-for='(ite,ind) in item.items'>
+                            <input type="radio">{{ite.item}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 模态框 -->
+    <div class="modal fade" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">人员信息编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">组名:</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="captain" v-if='isAdd == "add"' v-model='leadername'>
+                                <input type="text" class="form-control" name="captain" v-else :value='isVal' disabled>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">组员个数:</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="members" v-model='member_num'>
+                            </div>
+                            <div class="col-sm-4">
+                                <button type="button" class="btn btn-default" data-dismiss="modal" @click.stop='addMembers'>添加组员</button>
+                            </div>
+                        </div>
+                        <div class="form-group" v-for='(cout,index) in couts'>
+                            <label class="col-sm-4 control-label">组员{{index + 1}}</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control add">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" @click='saveGroup'>保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var vm = new Vue({
+        el: '#outline_box',
+        data: {
+            datelines: [], //存放题目大纲
+            questions: [], //存放所有出的问题和选项的集合
+            groups: [], //存放读取出来选项的集合
+            isAdd: 'add', //判断当前添加新的组还是单个选项
+            isVal: '', //存放添加新的子集的父级的名字
+            addId: '',//存放添加新的子集的父级的id
+            member_num: 0, //添加组员的个数
+            couts: 0,
+            leadername: '' //存放添加新组的根名
+        },
+        created() {
+            $.get('/outlines', (res) => {
+                this.datelines = res.data;
+            });
+            $.get('/items/getGroup', (res) => {
+                for (var i = 1; i <= res.data; i++) {
+                    $.get('/items/getItems', { group: i }, res => {
+                        this.groups.push(res.data)
+                    })
+                }
+            })
+        },
+        methods: {
+            chosen(textId, id) { //针对每个问题选择其选项
+                this.questions.forEach((el, index) => {
+                    if (el.id == textId) {
+                        el.items = this.groups[id]
+                    }
+                });
+            },
+            showModal(type, text, id) { //显示模态框
+                $('#myModal').modal('show');
+                if (type == 'add') { //添加新问卷组下 显示模态框
+                    this.isAdd = 'add';
+                    $('.modal-title').text('增加新问卷组');
+                }
+                if (type == 'addmer') {
+                    this.isAdd = 'addmer';
+                    $('.modal-title').text('增加新问卷');
+                    this.isVal = text; //读取问卷组父级的名称
+                    this.addId = id;
+                }
+                this.member_num = 0; //每次模态框开启时都将member_num归0
+                this.couts = 0; //同上
+            },
+            delgroups(id, pid) { //删除问卷
+                if (confirm('确定删除吗')) {
+                    $.get('/outlines/delteLeader', { id: id, pid: pid }, (res) => {
+                        if (res.error == 0) {
+                            $.get('/outlines', (res) => {
+                                this.datelines = res.data;
+                            });
+                        }
+                    })
+                }
+            },
+            editgroups(id, span, btn) {
+                if ($('.' + btn).text() == '编辑') {
+                    $('.' + span).prop('contenteditable', true);
+                    $('.' + btn).text('保存');
+                } else {
+                    $('.' + span).prop('contenteditable', false);
+                    $('.' + btn).text('编辑');
+                    $.get('/outlines/editgroup', { id: id, text: $('.' + span).text() }, (res) => {
+                        if (res.error == 0) {
+                            $.get('/outlines', (res) => {
+                                this.datelines = res.data;
+                            });
+                        }
+                    })
+                }
+            },
+            addMembers() {
+                this.couts = Number(this.member_num);
+            },
+            saveGroup() {
+                var addGroups = '';
+                $('.add').filter((index, el) => {
+                    if (el.value != '') {
+                        addGroups += el.value + ' '
+                    }
+                })
+                addGroups = addGroups.trim();
+                if (this.isAdd == 'addmer') {
+                    $.post('/outlines/addgroup', {
+                        addNew: addGroups,
+                        id: this.addId
+                    }, (res) => {
+                        if (res.error == 0) {
+                            $.get('/outlines', (res) => {
+                                this.datelines = res.data;
+                            });
+                        }
+                    }, 'json')
+                }
+                if (this.isAdd == 'add') {
+                    if (this.leadername == '') {
+                        alert('请填入组名');
+                        return
+                    } else {
+                        $.post('/outlines/addgroups', {
+                            leader: this.leadername,
+                        }, (res) => {
+                            if (res.error == 0) {
+                                $.post('/outlines/addgroup', {
+                                    addNew: addGroups,
+                                    id: res.data
+                                }, (res) => {
+                                    if (res.error == 0) {
+                                        $.get('/outlines', (res) => {
+                                            this.datelines = res.data;
+                                        });
+                                    }
+                                })
+                            }
+                        }, 'json')
+                    }
+
+                }
+                $('#myModal').modal('hide');
+            },
+            createQ() { //创建问卷
+                if (!this.questions.length) { //判断试卷中是否有题目
+                    alert('请选择问卷题目及题目选项')
+                } else {
+                    var question = Array.prototype.slice.call(this.questions);
+                    if (question.every((el, index) => { //判断每个题目中是否都存在选项
+                        return el.items != '';
+                    })) {
+                        var tittle = prompt('请输入该试卷的标题') || '未知题目';
+                        var questions = [];
+                        question.forEach((el, index) => {
+                            var arr = {};
+                            arr.id = el.id;
+                            arr.text = el.text;
+                            arr.items = el.items;
+                            questions.push(arr)
+                        })
+                        $.post('/outlines/createQ', {
+                            tittle: tittle,
+                            question: JSON.stringify(questions),
+                            creater: Cookies.get('username')
+                        }, (res) => {
+                            if (res.error == 0) {
+                                $.get('./questions.html', function (res) {
+                                    $('#content').html(res)
+                                })
+                            }
+                        })
+                    } else {
+                        alert('请给每个问卷题目都配置选项')
+
+                    }
+                }
+            }
+        }
+    })
+</script>

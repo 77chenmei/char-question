@@ -1,0 +1,210 @@
+<div id="users_tab" class="col-md-10 col-md-offset-1">
+    <h1 class='person_tittle'>用户管理</h1>
+    <hr class='person_hr'>
+    <p class='person_tittle'>
+        <span>人员操作：</span>
+        <button class='btn btn-success btn-xs' @click='selection("male")'>Male</button>
+        <button class='btn btn-success btn-xs' @click='selection("female")'>Female</button>
+        <button class='btn btn-success btn-xs' @click='selection("all")'>All</button>
+        <button class='btn btn-success btn-xs' @click='showModal("add")'>Add</button>
+    </p>
+    <!-- 表格容器，可用于设置整个的边框及高度 -->
+    <div class="sti-tbl-container">
+        <!-- 表头容器，必须留出17px的滚动条位置 -->
+        <div class="sti-tbl-header" style="padding-right:17px;">
+            <table class="table table-bordered" style="margin-bottom: 0px;border-bottom-style: none;">
+                <tr>
+                    <td style="width : 6%;">id</td>
+                    <td style="width : 10%;">username</td>
+                    <td style="width : 8%;">password</td>
+                    <td style="width : 8%;">sex</td>
+                    <td style="width : 10%;">age</td>
+                    <td style="width : 12%;">phone</td>
+                    <td style="width : 12%;">email</td>
+                    <td style="width : 10%;">realname</td>
+                    <td style="width : 8%;">type</td>
+                    <td style="width : 15%;">methods</td>
+                </tr>
+            </table>
+        </div>
+        <!-- 表格内容容器-->
+        <div class="sti-tbl-body">
+            <table class="table table-bordered scrolltable table-striped">
+                <tbody class="user_tbdy">
+                    <tr v-for='(user,index) in users' :key='"user_" + user.id'>
+                        <td style="width : 6%;">{{index + 1}}</td>
+                        <td style="width : 10%;">{{user.username}}</td>
+                        <td style="width : 8%;">{{user.password}}</td>
+                        <td style="width : 8%;">{{user.sex}}</td>
+                        <td style="width : 10%;">{{user.age}}</td>
+                        <td style="width : 12%;">{{user.phone}}</td>
+                        <td style="width : 12%;">{{user.email}}</td>
+                        <td style="width : 10%;">{{user.realname}}</td>
+                        <td style="width : 8%;">{{user.type == '1' ? '学生' : user.type == '2' ? '教师' : '管理员'}}</td>
+                        <td style="width : 15%;">
+                            <button class="btn-danger btn-xs" @click='del(user.id)'>删除</button>
+                            <button class="btn-warning btn-xs" @click='showModal("edit",user.id)'>edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- 模态框 -->
+    <div class="modal fade" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">人员信息编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" name="username" v-model="person.username">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" name="password" v-model="person.password">
+                        </div>
+                        <div class="form-group">
+                            <label for="sex">Sex</label>
+                            <input type="radio" v-model="person.sex" value='male'>male
+                            <input type="radio" v-model="person.sex" value='female'>female
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" class="form-control" name="age" v-model="person.age">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="number" class="form-control" name="phone" v-model="person.phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" name="email" v-model="person.email">
+                        </div>
+                        <div class="form-group">
+                            <label for="realname">Realname</label>
+                            <input type="text" class="form-control" name="realname" v-model="person.realname">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <select v-model='person.type'>
+                                <option>请选择</option>
+                                <option value='0'>管理员</option>
+                                <option value='1'>学生</option>
+                                <option value='2'>教师</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" @click='editSave(person.id)'>保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    /*
+        1.从数据库中获取数据
+        2.展示数据（table）
+        3.删除
+        4.add数据（密码加密传输）
+        5.修改数据
+    */
+    var vm = new Vue({
+        el: '#users_tab',
+        data: {
+            items: [], //用户存放数据库获取的用户信息
+            users: [], //生成表格，便于在刷选
+            person: {},//存放选中编辑用户的信息
+            username: '',
+            type: '' //用户存放模态框是在编辑 / 增加状态下出现
+        },
+        mounted: function () {
+            this.getdata();
+        },
+        methods: {
+            //数据的获取
+            getdata() {
+                axios.get('/users/getUser').then((res) => {
+                    var rd = res.data;
+                    if (rd.error == 0) {
+                        this.items = rd.data;
+                        this.users = this.items;
+                    } else {
+                        console.log(rd.errorInfo)
+                    }
+                })
+            },
+            //删除用户
+            del: function (id) {
+                if (confirm('确定删除吗？')) {
+                    $.post('/users/delUser', { id: id }, (res) => {
+                        if (res.error == 0) {
+                            this.getdata();
+                        } else {
+                            console.log(res.errorInfo)
+                        }
+                    })
+                }
+            },
+            //用户查询
+            selection(type) {
+                var items = Array.prototype.slice.call(this.items)
+                if (type == 'all') {
+                    this.getdata();
+                } else {
+                    this.users = items.filter((item) => {
+                        return item.sex == type;
+                    })
+                }
+            },
+            //显示模态框
+            showModal: function (type, id) {
+                $('form')[0].reset();
+                $('#myModal').modal('show')
+                this.type = type;
+                if (type == 'edit') { //编辑时 模态框
+                    $.get('/users/profile', { id: id }, (res) => {
+                        if (res.error == 0) {
+                            this.person = res.data[0];
+                        } else {
+                            console.log(res.errorInfo)
+                        }
+                    })
+                }
+            },
+            editSave() {
+                $('#myModal').modal('hide');
+                if (this.type == 'edit') { //编辑状态下的 保存
+                    $.post('/users/editSave', this.person, (res) => {
+                        if (res.error == 0) {
+                            this.getdata();
+                        } else {
+                            console.log(res.errorInfo)
+                        }
+                    })
+                }
+                if (this.type == 'add') { //增加用户状态下的 保存
+                    $.post('/users/addSave', this.person, (res) => {
+                        if (res.error == 0) {
+                            this.getdata();
+                        } else {
+                            console.log(res.errorInfo)
+                        }
+                    })
+                }
+
+
+
+            }
+        }
+    })
+</script>

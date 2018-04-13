@@ -1,0 +1,206 @@
+<div class="wrapper col-md-8 col-md-offset-2">
+    <form class="form-horizontal" id="reg_frm" enctype="multipart/form-data">
+        <fieldset>
+            <legend>注册</legend>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">类型：</label>
+                <div class="col-sm-8">
+                    <div class="radio-inline">
+                        <input type="radio" value='1' name='type'>学生
+                    </div>
+                    <div class="radio-inline">
+                        <input type="radio" value='2' name='type'>教师
+                    </div>
+                    <span></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="degree">个人头像</label>
+                <span>点击图片，更改头像</span>
+                <div id="file">
+                    <img src="./uploads/tx.jpg" class="img-circle img-responsive" id="fileImage">
+                    <input type="file" name="images" id="filename" onchange="demo.register.changeImage()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="username">用户名</label>
+                <span></span>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control ipnVal" id="reg_username" name="username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="password">密码</label>
+                <span></span>
+                <div class="col-sm-8">
+                    <input type="password" class="form-control" id="reg_password" name="password">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="sex" class="col-sm-2 control-label">Sex</label>
+                <div class="col-sm-8">
+                    <div class="radio-inline">
+                        <input type="radio" name='sex' value='male'>male
+                    </div>
+                    <div class="radio-inline">
+                        <input type="radio" name='sex' value='female'>female
+                    </div>
+                    <!-- <input type="radio" name='sex' value='male'>male
+                    <input type="radio" name='sex' value='female'>female -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="age" class="col-sm-2 control-label">Age</label>
+                <div class="col-sm-8">
+                    <input type="number" class="form-control  ipnVal" id="reg_age" name="age">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="email">邮箱</label>
+                <span></span>
+                <div class="col-sm-8">
+                    <input type="email" class="form-control ipnVal" id="reg_email" name="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="phone">电话</label>
+                <span></span>
+                <div class="col-sm-8">
+                    <input type="number" class="form-control ipnVal" id="reg_phone" name="phone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="realname">真实姓名</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="reg_realname" name="realname">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-8 text-center">
+                    <button type="submit" class="btn btn-info btn-block">注册</button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<script>
+    //注册页面
+    $('#reg_frm').validate({
+        //校验规则
+        rules: {
+            type: {
+                required: true,
+            },
+            username: {
+                required: true,
+                rangelength: [4, 18],
+                remote: {
+                    url: '/regex',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        inpName: 'username',
+                        type: function () {
+                            return reg_frm.type.value
+                        }
+                    }
+                }
+            },
+            password: {
+                required: true,
+                minlength: 6
+            },
+            email: {
+                required: true,
+                isEmail: true,
+                remote: {
+                    url: '/regex',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        inpName: 'email',
+                        type: function () {
+                            return reg_frm.type.value
+                        }
+                    }
+                }
+            },
+            phone: {
+                required: true,
+                number: true,
+                rangelength: [11, 11],
+                isMobile: true,
+                remote: {
+                    url: '/regex',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        inpName: 'phone',
+                        type: function () {
+                            return reg_frm.type.value
+                        }
+                    }
+                }
+            },
+            realname: {
+                rangelength: [4, 18],
+            }
+        },
+        //提示信息更改
+        messages: {
+            type: {
+                required: '类型不得为空'
+            },
+            username: {
+                required: '用户名不得为空',
+                rangelength: '用户名必须时2-18位',
+                remote: '该用户已经被注册',
+            },
+            password: {
+                required: '密码不得为空',
+                minlength: '密码至少6位'
+            },
+            email: {
+                required: '邮箱不得为空',
+                remote: '该邮箱已经被注册'
+            },
+            phone: {
+                required: '手机号码不得为空',
+                rangelength: '请输入正确的手机号码位数',
+                isMobile: '请输入正确的手机号码',
+                remote: '该手机号码已经被注册'
+            },
+            realname: {
+                rangelength: '用户名必须时4-18位',
+            }
+        },
+        //改变错误信息防置的位置
+        errorPlacement: function (error, element) {
+            error.appendTo(element.parent().siblings('span'));
+        },
+        //注册成功后提交到数据库中
+        submitHandler: function (form) {
+            $.post('/register', {
+                type: reg_frm.type.value,
+                photo: demo.register.file_img,
+                username: reg_frm.username.value,
+                password: reg_frm.password.value,
+                sex: reg_frm.sex.value,
+                age: reg_frm.age.value,
+                email: reg_frm.email.value,
+                phone: reg_frm.phone.value,
+                realname: reg_frm.realname.value
+            }, function (res) {
+                if (res.error == 0) {
+                    alert(res.message);
+                    demo.index.jump('login');
+                } else {
+                    console.log(res.errorInfo);
+                }
+            }, 'json')
+        }
+    }); //表单的验证 表单的id
+
+</script>
